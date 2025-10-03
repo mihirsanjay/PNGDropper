@@ -76,6 +76,78 @@ Malware Binary → PNG Image → Windows Resource → DLL Dropper → Execution
    (Original)   (Visual Noise)  (Embedded)   (Obfuscated)  (Runtime)
 ```
 
+## 📊 Complete Pipeline Flowchart
+
+### 🔄 Build Phase (Encoding) → Execution Phase (Decoding)
+
+```mermaid
+flowchart TD
+    A[Original PE Binary] --> B[XOR Encoding<br/>Key: 0x35]
+    B --> C[Base64 Encoding]
+    C --> D[Binary-to-PNG Conversion<br/>LodePNG Library]
+    D --> E[Embed PNG in Windows Resource<br/>RC File + windres]
+    E --> F[Compile DLL Dropper<br/>MinGW Cross-compiler]
+    F --> G[📦 Final Dropper.dll]
+    
+    %% Execution Flow
+    G --> H[DLL Loaded by Target Process]
+    H --> I[DllMain Entry Point]
+    I --> J[Dynamic API Resolution<br/>Obfuscated Function Loading]
+    J --> K[Extract PNG Resource<br/>FindResourceW/LoadResource]
+    K --> L[XOR Decoding<br/>Key: 0x35]
+    L --> M[Base64 Decoding]
+    M --> N[PNG-to-PE Conversion<br/>LodePNG Decode]
+    N --> O[PE Structure Validation<br/>DOS/NT Headers Check]
+    O --> P[Write to Temp File<br/>%TEMP%\temp_[random].exe]
+    P --> Q[Execute Payload<br/>CreateProcessA]
+    Q --> R[Clean Up Temp File<br/>DeleteFileA after delay]
+    
+    %% Batch Processing
+    S[50 Malware Samples] --> T[Python Batch Processor]
+    T --> U[For Each Sample:<br/>PE→XOR→Base64→PNG]
+    U --> V[Generate Resource Files]
+    V --> W[Automated Build Pipeline]
+    W --> X[50 Dropper DLLs Generated]
+    X --> Y[SHA256 Hash Verification<br/>Integrity Check]
+```
+
+### 🚀 Detailed Step-by-Step Flow
+
+#### 📦 **BUILD PHASE (Encoding):**
+1. **Original PE Binary** → Raw malware executable
+2. **XOR Encoding** → `data[i] ^ 0x35` for obfuscation
+3. **Base64 Encoding** → Convert to ASCII text format
+4. **PNG Conversion** → Embed as grayscale PNG image pixels
+5. **Resource Embedding** → Compile into Windows RC file
+6. **DLL Compilation** → MinGW creates final dropper.dll
+
+#### 🎯 **EXECUTION PHASE (Decoding):**
+1. **DLL Load** → Target process loads dropper.dll
+2. **Entry Point** → DllMain(DLL_PROCESS_ATTACH)
+3. **API Resolution** → Dynamically load Windows APIs
+4. **Resource Extraction** → Get embedded PNG resource
+5. **XOR Decoding** → Reverse XOR with key 0x35
+6. **Base64 Decoding** → Convert back to binary
+7. **PNG Decoding** → Extract PE binary from PNG pixels
+8. **PE Validation** → Check DOS/NT headers for integrity
+9. **Temp File Creation** → Write to system temp directory
+10. **Execution** → Launch malware via CreateProcessA
+11. **Cleanup** → Remove temp file after 1 second
+
+#### ⚡ **Key Pipeline Features:**
+- **Multi-layer Obfuscation**: XOR + Base64 + PNG steganography
+- **Dynamic APIs**: Runtime function resolution (anti-static analysis)
+- **Integrity Verification**: SHA256 hash validation throughout pipeline
+- **Automated Processing**: Batch conversion of 50 samples
+- **Clean Execution**: Temporary file cleanup for stealth
+
+#### 🔒 **Evasion Techniques:**
+- PNG images appear as innocent graphics files
+- XOR+Base64 defeats simple signature detection
+- Dynamic API loading evades static analysis
+- Temporary execution leaves minimal forensic traces
+- Resource embedding hides payload in legitimate PE structure
+
 ### Obfuscation Layers
 1. **Binary→PNG Conversion**: Malware appears as grayscale image
 2. **XOR Encoding**: Bytes XORed with key `0x35`  

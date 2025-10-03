@@ -1,0 +1,14 @@
+[1;33m🔨 Building PNG-embedded dropper DLLs...[0m
+Cross-compiler: x86_64-w64-mingw32-g++
+Resource compiler: x86_64-w64-mingw32-windres
+Output directory: /home/mihir/Dropper/png_embedded_samples
+Build log: build_log.txt
+==============================================
+[1;33mFound 5 dropper directories to build[0m
+
+[1;33mBuilding dropper for sample: 2[0m
+  📁 Files present: ✓
+  🔧 Compiling resources...
+  🔧 Compiling DLL...
+[0;32m  ✅ Success! DLL size: 953865 bytes[0m
+  📦 Copied to: /home/mihir/Dropper/png_embedded_samples/dropper_2.dll

@@ -1,0 +1,16 @@
+Source.cpp:7:9: fatal error: Windows.h: No such file or directory
+    7 | #include<Windows.h>             // Resource Management
+      |         ^~~~~~~~~~~
+compilation terminated.
+Source.cpp:16:9: fatal error: Uxtheme.h: No such file or directory
+   16 | #include<Uxtheme.h>
+      |         ^~~~~~~~~~~
+compilation terminated.
+In file included from /usr/share/mingw-w64/include/windows.h:72,
+                 from Source_Simple.cpp:5:
+Source_Simple.cpp: In function ‘void run(HANDLE)’:
+Source_Simple.cpp:165:25: error: cannot convert ‘LPSTR’ {aka ‘char*’} to ‘LPCWSTR’ {aka ‘const wchar_t*’} in argument passing
+  165 |         HRSRC r = frw(h,MAKEINTRESOURCE(IDR_PNG1),MAKEINTRESOURCE(PNG));
+      |                         ^~~~~~~~~~~~~~~
+      |                         |
+      |                         LPSTR {aka char*}

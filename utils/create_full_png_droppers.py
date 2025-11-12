@@ -22,8 +22,8 @@ def create_full_png_droppers():
     image_dll_template = dropper_dir / "image.dll" / "Dropper"
     utils_dir = dropper_dir / "utils"
     
-    # NEW: Output directory for all 50 samples
-    output_dir = dropper_dir / "png_droppers_full"
+    # NEW: Output directory for all 50 samples (no encoding version)
+    output_dir = dropper_dir / "png_droppers_no_encoding"
     temp_build_dir = output_dir / "build_temp"
     
     # Clean and create directories

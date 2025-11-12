@@ -24,9 +24,9 @@ void* png_to_pe(unsigned char* png_data, size_t png_size, DWORD* pe_size);
 
 // Dropper Configurations
 //#define DEAD_IMPORTS
-#define XOR_ENCODE
+//#define XOR_ENCODE     // Disabled for clean PNG-only pipeline
 #define XOR_KEY 0x35
-#define BASE64
+//#define BASE64         // Disabled for clean PNG-only pipeline
 #define RANDOM_NAME
 #define NAME_SIZE 10
 #define PNG_DECODE

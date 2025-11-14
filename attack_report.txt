@@ -1,0 +1,94 @@
+# PNG Steganography-Based Malware Dropper: Attack Strategy Report
+
+## Methodology
+
+### Attack Design
+This attack strategy leverages PNG image format as a covert delivery mechanism for malware payloads. The core concept transforms executable binaries into grayscale PNG images through direct byte-to-pixel mapping, creating seemingly innocent image files that contain fully functional malware.
+
+### Rationale
+Modern security systems extensively monitor executable file transfers and suspicious binary patterns. By converting malware into PNG format, this approach:
+- **Bypasses content filters** that typically allow image files
+- **Evades signature-based detection** as malware appears as visual data
+- **Reduces suspicion** during network transmission and storage
+- **Maintains full functionality** through lossless conversion processes
+
+### Goals
+1. **Covert Delivery**: Enable undetected malware distribution through image channels
+2. **Evasion Capability**: Circumvent traditional antivirus and network security measures
+3. **Functional Preservation**: Maintain 100% malware behavior and execution capabilities
+4. **Scalable Production**: Demonstrate batch processing of diverse malware samples
+
+## Techniques and Procedures
+
+### Core Algorithm: Direct Byte-to-Pixel Mapping
+The conversion employs a mathematical transformation where each malware byte directly becomes a PNG pixel value:
+
+```
+PE_byte_value[i] → PNG_pixel_value[i] (1:1 mapping)
+Range: 0-255 (8-bit) → 0-255 (grayscale)
+```
+
+### Conversion Process
+1. **Dimension Calculation**: `width = ceil(sqrt(pe_size))` for near-square optimization
+2. **Padding Addition**: Append null bytes to fit exact image dimensions
+3. **PNG Generation**: Create 8-bit grayscale PNG using PIL (Python Imaging Library)
+4. **Metadata Storage**: Save original size in `.meta` files for accurate reconstruction
+
+### Runtime Reconstruction Framework
+1. **Resource Extraction**: Extract embedded PNG from DLL resources using Windows APIs
+2. **PNG Decoding**: Utilize LodePNG library for pixel-to-byte conversion
+3. **PE Validation**: Verify DOS/PE headers and structural integrity
+4. **Memory Injection**: Deploy advanced process hollowing techniques for execution
+
+### Encoding Libraries
+- **Build-time**: Python PIL + NumPy (development environment)
+- **Runtime**: LodePNG C library (embedded in dropper)
+- **Compatibility**: Both use 8-bit grayscale mode for identical pixel mapping
+
+## Implementation Details
+
+### Project Structure
+```
+image.dll/Dropper/          # Template dropper source code
+├── Source.cpp              # Runtime decoder and PE injector
+├── lodepng.cpp/h          # PNG decoding library
+├── Resource.rc            # Resource embedding script
+└── resource.h             # Resource definitions
+
+utils/                      # Build automation scripts
+├── create_full_png_droppers.py    # Main batch orchestrator
+├── pe_to_image.py         # PE→PNG conversion utility
+└── build_single_dropper.sh       # MinGW compilation script
+```
+
+### Key Parameters
+- **PNG Format**: 8-bit grayscale (LCT_GREY, 8) for lossless byte preservation
+- **Resource ID**: IDR_PNG1 (101) embedded as PNG resource type (256)
+- **Padding**: Null bytes (0x00) appended to achieve square dimensions
+- **Compilation**: MinGW cross-compiler targeting Windows x64 architecture
+
+### Configuration Specifications
+- **Input Dataset**: 50 malware samples from research collection
+- **Output Format**: Windows DLL files (733KB - 1.7MB range)
+- **Encoding Pipeline**: Disabled XOR/Base64 for clean PNG-only conversion
+- **Injection Method**: Process hollowing with suspended thread resumption
+
+### Evasion Techniques
+- **Dynamic API Resolution**: All Windows APIs resolved at runtime via GetProcAddress()
+- **String Obfuscation**: API names stored as integer arrays, decoded during execution
+- **Dead Export Generation**: 200+ fake exports mimicking legitimate system DLLs
+- **In-Memory Execution**: No disk writes during malware deployment
+
+### Verification Mechanisms
+- **PE Header Validation**: Verify MZ and PE signatures before execution
+- **Size Recovery**: Use PE headers (SizeOfImage) for accurate memory allocation
+- **Resource Integrity**: Confirm PNG extraction and decoding success
+- **Execution Context**: Maintain original entry points and section mappings
+
+### Production Metrics
+- **Success Rate**: 100% (50/50 samples processed successfully)
+- **Processing Time**: ~84 seconds for complete batch (1.7s per sample)
+- **Compression Efficiency**: ~56% average size reduction in final zip archive
+- **Functional Preservation**: Lossless conversion maintaining full malware capabilities
+
+This implementation demonstrates a sophisticated approach to malware obfuscation, combining image steganography concepts with advanced PE manipulation techniques to create a robust and scalable attack delivery system.

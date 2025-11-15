@@ -1,3 +1,4 @@
+# Main files and folders : image.dll/Source.cpp, image.dll/lodepng.cpp and utils/pe_to_image.py, utils/create_full_png_droppers.py
 # PNG-Embedded Dropper System
 
 ## Overview
